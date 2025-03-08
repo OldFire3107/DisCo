@@ -16,14 +16,14 @@ def distance_corr(var_1, var_2, normedweight, power=1):
     xx = tf.reshape(xx, [tf.size(var_1), tf.size(var_1)])
  
     yy = tf.transpose(xx)
-    amat = tf.math.abs(xx-yy)
+    amat = tf.math.abs(xx-yy)**power
     
     xx = tf.reshape(var_2, [-1, 1])
     xx = tf.tile(xx, [1, tf.size(var_2)])
     xx = tf.reshape(xx, [tf.size(var_2), tf.size(var_2)])
     
     yy = tf.transpose(xx)
-    bmat = tf.math.abs(xx-yy)
+    bmat = tf.math.abs(xx-yy)**power
    
     amatavg = tf.reduce_mean(amat*normedweight, axis=1)
     bmatavg = tf.reduce_mean(bmat*normedweight, axis=1)
@@ -42,11 +42,7 @@ def distance_corr(var_1, var_2, normedweight, power=1):
     AAavg = tf.reduce_mean(Amat*Amat*normedweight,axis=1)
     BBavg = tf.reduce_mean(Bmat*Bmat*normedweight,axis=1)
    
-    if power==1:
-        dCorr = tf.reduce_mean(ABavg*normedweight)/tf.math.sqrt(tf.reduce_mean(AAavg*normedweight)*tf.reduce_mean(BBavg*normedweight))
-    elif power==2:
-        dCorr = (tf.reduce_mean(ABavg*normedweight))**2/(tf.reduce_mean(AAavg*normedweight)*tf.reduce_mean(BBavg*normedweight))
-    else:
-        dCorr = (tf.reduce_mean(ABavg*normedweight)/tf.math.sqrt(tf.reduce_mean(AAavg*normedweight)*tf.reduce_mean(BBavg*normedweight)))**power
+    
+    dCorr = tf.math.sqrt(tf.reduce_mean(ABavg*normedweight)/tf.math.sqrt(tf.reduce_mean(AAavg*normedweight)*tf.reduce_mean(BBavg*normedweight)))
   
     return dCorr
