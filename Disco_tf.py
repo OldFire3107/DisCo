@@ -1,10 +1,11 @@
 import tensorflow as tf
 
-def distance_corr(var_1, var_2, normedweight, power=1):
+def distance_corr(var_1, var_2, normedweight, power=1, exponent=1):
     """var_1: First variable to decorrelate (eg mass)
     var_2: Second variable to decorrelate (eg classifier output)
     normedweight: Per-example weight. Sum of weights should add up to N (where N is the number of examples)
-    power: Exponent used in calculating the distance correlation
+    power: Overall power of the distance correlation. Default is 2, 1 gives the standard dcorr package
+    exponent: Power of the distance. Default is 1, should be between (0,2) to decorrelate
     
     va1_1, var_2 and normedweight should all be 1D tf tensors with the same number of entries
     
@@ -16,14 +17,20 @@ def distance_corr(var_1, var_2, normedweight, power=1):
     xx = tf.reshape(xx, [tf.size(var_1), tf.size(var_1)])
  
     yy = tf.transpose(xx)
-    amat = tf.math.abs(xx-yy)**power
+    if exponent == 1:
+        amat = tf.math.abs(xx-yy)
+    else:
+        amat = tf.math.abs(xx-yy)**exponent
     
     xx = tf.reshape(var_2, [-1, 1])
     xx = tf.tile(xx, [1, tf.size(var_2)])
     xx = tf.reshape(xx, [tf.size(var_2), tf.size(var_2)])
     
     yy = tf.transpose(xx)
-    bmat = tf.math.abs(xx-yy)**power
+    if exponent == 1:
+        bmat = tf.math.abs(xx-yy)
+    else:
+        bmat = tf.math.abs(xx-yy)**exponent
    
     amatavg = tf.reduce_mean(amat*normedweight, axis=1)
     bmatavg = tf.reduce_mean(bmat*normedweight, axis=1)
@@ -42,7 +49,11 @@ def distance_corr(var_1, var_2, normedweight, power=1):
     AAavg = tf.reduce_mean(Amat*Amat*normedweight,axis=1)
     BBavg = tf.reduce_mean(Bmat*Bmat*normedweight,axis=1)
    
-    
-    dCorr = tf.math.sqrt(tf.reduce_mean(ABavg*normedweight)/tf.math.sqrt(tf.reduce_mean(AAavg*normedweight)*tf.reduce_mean(BBavg*normedweight)))
+    if power == 1:
+        dCorr = tf.math.sqrt(tf.reduce_mean(ABavg*normedweight)/tf.math.sqrt(tf.reduce_mean(AAavg*normedweight)*tf.reduce_mean(BBavg*normedweight)))
+    elif power == 2:
+        dCorr = tf.reduce_mean(ABavg*normedweight)/tf.math.sqrt(tf.reduce_mean(AAavg*normedweight)*tf.reduce_mean(BBavg*normedweight))
+    else:
+        dCorr = tf.reduce_mean(ABavg*normedweight)/tf.math.sqrt(tf.reduce_mean(AAavg*normedweight)*tf.reduce_mean(BBavg*normedweight))**(power/2)
   
     return dCorr

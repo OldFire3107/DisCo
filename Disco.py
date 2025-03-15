@@ -1,10 +1,11 @@
 import torch
 
-def distance_corr(var_1,var_2,normedweight,power=1):
+def distance_corr(var_1,var_2,normedweight,power=2,exponent=1):
     """var_1: First variable to decorrelate (eg mass)
     var_2: Second variable to decorrelate (eg classifier output)
     normedweight: Per-example weight. Sum of weights should add up to N (where N is the number of examples)
-    power: Exponent used in calculating the distance correlation
+    power: Overall power of the distance correlation. Default is 2, 1 gives the standard dcorr package
+    exponent: Power of the distance. Default is 1, should be between (0,2) to decorrelate
     
     va1_1, var_2 and normedweight should all be 1D torch tensors with the same number of entries
     
@@ -14,11 +15,17 @@ def distance_corr(var_1,var_2,normedweight,power=1):
     
     xx = var_1.view(-1, 1).repeat(1, len(var_1)).view(len(var_1),len(var_1))
     yy = var_1.repeat(len(var_1),1).view(len(var_1),len(var_1))
-    amat = (xx-yy).abs()**power
+    if exponent == 1:
+        amat = (xx-yy).abs()
+    else:
+        amat = (xx-yy).abs()**exponent
 
     xx = var_2.view(-1, 1).repeat(1, len(var_2)).view(len(var_2),len(var_2))
     yy = var_2.repeat(len(var_2),1).view(len(var_2),len(var_2))
-    bmat = (xx-yy).abs()**power
+    if exponent == 1:
+        bmat = (xx-yy).abs()
+    else:
+        bmat = (xx-yy).abs()**exponent
 
     amatavg = torch.mean(amat*normedweight,dim=1)
     amat=amat-amatavg.repeat(len(var_1),1).view(len(var_1),len(var_1))\
@@ -34,7 +41,13 @@ def distance_corr(var_1,var_2,normedweight,power=1):
     AAavg = torch.mean(amat*amat*normedweight,dim=1)
     BBavg = torch.mean(bmat*bmat*normedweight,dim=1)
 
-    dCorr=torch.sqrt(torch.mean(ABavg*normedweight)/torch.sqrt((torch.mean(AAavg*normedweight)*torch.mean(BBavg*normedweight))))
+
+    if power == 2:
+        dCorr=torch.mean(ABavg*normedweight)/torch.sqrt((torch.mean(AAavg*normedweight)*torch.mean(BBavg*normedweight)))
+    elif power == 1:
+        dCorr=torch.sqrt(torch.mean(ABavg*normedweight)/torch.sqrt((torch.mean(AAavg*normedweight)*torch.mean(BBavg*normedweight))))
+    else:
+        dCorr=torch.mean(ABavg*normedweight)/torch.sqrt((torch.mean(AAavg*normedweight)*torch.mean(BBavg*normedweight)))**(power/2)
     
     return dCorr
 
