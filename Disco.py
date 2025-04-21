@@ -13,7 +13,7 @@ def distance_corr(var_1,var_2,normedweight=None,power=2,exponent=1):
     """
     
     if normedweight is None:
-        normedweight = torch.ones(var_1.shape[0])
+        normedweight = torch.ones(var_1.shape[0], device=var_1.device)
 
     xx = var_1.view(-1, 1).repeat(1, len(var_1)).view(len(var_1),len(var_1))
     yy = var_1.repeat(len(var_1),1).view(len(var_1),len(var_1))
@@ -125,7 +125,7 @@ def distance_corr_unbiased(var_1,var_2,normedweight=None,power=2,exponent=1):
     N = var_1.shape[0]
     
     if normedweight is None:
-        normedweight = torch.ones(var_1.shape[0])
+        normedweight = torch.ones(var_1.shape[0], device=var_1.device)
 
     xx = var_1.view(-1, 1).repeat(1, len(var_1)).view(len(var_1),len(var_1))
     yy = var_1.repeat(len(var_1),1).view(len(var_1),len(var_1))
